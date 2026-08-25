@@ -52,7 +52,6 @@ Cloudflare Builds автоматически выполнит deploy после 
 Если хочешь свой адрес вроде `wiki.example.com`, после деплоя открой Worker → Settings → Domains & Routes → Add Custom Domain.
 
 ## 6. Первый администратор
-Логин: `NIGHT_KING`
-Пароль: `vozn_04`
+
 
 После первого запуска обязательно поменяй пароль перед публичным использованием.
