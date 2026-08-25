@@ -1,1 +1,1 @@
-{"name":"voznesenie-wiki","private":true,"type":"module"}
+{"name":"voznesenie-wiki","private":true,"scripts":{"deploy":"wrangler deploy"},"devDependencies":{"wrangler":"4.125.0"}}
