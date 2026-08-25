@@ -12,4 +12,4 @@ D1 уже прописан: `dc1695af-9944-4a5d-901b-7280f540bb93`. Схема �
 
 Имя Worker: `voznesenie-wiki-nk`. После успешного deploy Cloudflare покажет адрес `https://voznesenie-wiki-nk.<account-subdomain>.workers.dev`.
 
-Первый администратор: NIGHT_KING / vozn_04.
+Первый 
