@@ -1,30 +1,15 @@
 # Вознесение Wiki — Cloudflare Workers + D1
 
-Готовая мобильная Wiki без обязательного входа. Статьи, категории, подкатегории, теги, поиск и админка хранятся в Cloudflare D1.
+Эта версия специально исправляет ошибку `Asset too large`: Worker не использует `[assets]` и не загружает `node_modules`. HTML/CSS/JS встроены в Worker.
 
 ## Cloudflare Workers Builds
-
-- Build command: `npm install`
+- Build command: оставить пустым (или `echo Build complete`)
 - Deploy command: `npx wrangler deploy`
-- Version command: оставить пустым
+- Version command: пусто
 - Root directory: `/`
 
-Wrangler уже настроен на Worker `voznesenie-wiki-nk` и D1 database ID:
-`dc1695af-9944-4a5d-901b-7280f540bb93`
+D1 уже прописан: `dc1695af-9944-4a5d-901b-7280f540bb93`. Схема таблиц создаётся Worker автоматически при первом запросе.
 
-### Почему больше не будет ошибки 144 MiB
+Имя Worker: `voznesenie-wiki-nk`. После успешного deploy Cloudflare покажет адрес `https://voznesenie-wiki-nk.<account-subdomain>.workers.dev`.
 
-Статические assets остаются в корне проекта (папок внутри ZIP нет), но Wrangler получает `assets.include` и публикует только `index.html`, `style.css` и `app.js`. Поэтому `node_modules/workerd/bin/workerd` не считается публичным asset.
-
-## Первый администратор
-
-
-После запуска рекомендуется сменить пароль/создать отдельную учётную запись администратора.
-
-## D1
-
-В базе должна быть применена схема из `schema.sql`. Если таблицы ещё не созданы, выполни содержимое `schema.sql` в D1 Console.
-
-## Адрес сайта
-
-`workers_dev = true`, поэтому после успешного deploy Cloudflare выдаст `workers.dev` адрес для Worker `voznesenie-wiki-nk`. Также можно привязать свой домен в Workers & Pages → Worker → Settings → Domains & Routes.
+Первый администратор: NIGHT_KING / vozn_04.

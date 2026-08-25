@@ -3,13 +3,6 @@ main = "worker.js"
 compatibility_date = "2026-08-25"
 workers_dev = true
 
-[assets]
-directory = "."
-binding = "ASSETS"
-not_found_handling = "single-page-application"
-# Only these files are public assets. This prevents Cloudflare from scanning/uploading node_modules.
-include = ["index.html", "style.css", "app.js"]
-
 [[d1_databases]]
 binding = "DB"
 database_name = "voznesenie-wiki-db"
