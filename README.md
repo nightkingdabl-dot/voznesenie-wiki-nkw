@@ -1,57 +1,32 @@
 # Вознесение Wiki — Cloudflare Workers + D1
 
-Готовая версия для Cloudflare Workers Builds. Все проектные файлы лежат **прямо в корне репозитория**, без папок.
+Готовая мобильная Wiki без обязательного входа. Статьи, категории, подкатегории, теги, поиск и админка хранятся в Cloudflare D1.
 
-## Что исправлено
-- Добавлен `.assetsignore`, поэтому `node_modules/workerd` больше не загружается как сайт и ошибка `Asset too large` не возникает.
-- `workers_dev = true` включён, поэтому Worker получает адрес вида `https://voznesenie-wiki.<ВАШ-SUBDOMAIN>.workers.dev` после первого деплоя.
-- Поиск по названию, описанию, тексту и тегам.
-- Теги статей.
-- Категории и подкатегории.
-- Регистрация/вход по желанию.
-- Админка: создание/редактирование/удаление статей, категории, пользователи, выдача админских прав, блокировка.
-- Адаптивный дизайн для телефона.
-- Cloudflare D1 для постоянного хранения.
+## Cloudflare Workers Builds
 
-## 1. D1
-Cloudflare → Workers & Pages → D1 → Create database.
-
-Имя: `voznesenie-wiki-db`
-
-В SQL Console выполни **весь** файл `schema.sql`.
-
-## 2. Database ID
-Открой D1 → созданную базу → скопируй Database ID.
-
-В `wrangler.toml` замени:
-`REPLACE_WITH_YOUR_D1_DATABASE_ID`
-на настоящий ID.
-
-## 3. GitHub
-Загрузи все файлы из этого ZIP прямо в корень репозитория. Папки создавать не нужно.
-
-## 4. Cloudflare Workers Builds
-Подключи GitHub-репозиторий через Workers & Pages → Create application → Import a repository.
-
-Настройки:
 - Build command: `npm install`
 - Deploy command: `npx wrangler deploy`
-- Version command: **пусто** (для production)
+- Version command: оставить пустым
 - Root directory: `/`
 
-Cloudflare Builds автоматически выполнит deploy после push.
+Wrangler уже настроен на Worker `voznesenie-wiki-nk` и D1 database ID:
+`dc1695af-9944-4a5d-901b-7280f540bb93`
 
-## 5. Адрес сайта
-После успешного деплоя Cloudflare выдаст URL на странице Worker.
+### Почему больше не будет ошибки 144 MiB
 
-Так как `workers_dev = true`, адрес будет иметь вид:
-`https://voznesenie-wiki.<ВАШ-SUBDOMAIN>.workers.dev`
+Статические assets остаются в корне проекта (папок внутри ZIP нет), но Wrangler получает `assets.include` и публикует только `index.html`, `style.css` и `app.js`. Поэтому `node_modules/workerd/bin/workerd` не считается публичным asset.
 
-Точный `<ВАШ-SUBDOMAIN>` зависит от аккаунта Cloudflare, поэтому заранее придумать полный URL нельзя.
+## Первый администратор
 
-Если хочешь свой адрес вроде `wiki.example.com`, после деплоя открой Worker → Settings → Domains & Routes → Add Custom Domain.
+- Логин: `NIGHT_KING`
+- Пароль: `vozn_04`
 
-## 6. Первый администратор
+После запуска рекомендуется сменить пароль/создать отдельную учётную запись администратора.
 
+## D1
 
-После первого запуска обязательно поменяй пароль перед публичным использованием.
+В базе должна быть применена схема из `schema.sql`. Если таблицы ещё не созданы, выполни содержимое `schema.sql` в D1 Console.
+
+## Адрес сайта
+
+`workers_dev = true`, поэтому после успешного deploy Cloudflare выдаст `workers.dev` адрес для Worker `voznesenie-wiki-nk`. Также можно привязать свой домен в Workers & Pages → Worker → Settings → Domains & Routes.
