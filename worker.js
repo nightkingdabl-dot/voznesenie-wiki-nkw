@@ -8,7 +8,7 @@ const J=(x,s=200,h={})=>new Response(JSON.stringify(x),{status:s,headers:{'conte
 const slug=s=>String(s||'').trim().toLowerCase().replace(/ё/g,'е').normalize('NFKD').replace(/[^\p{L}\p{N}]+/gu,'-').replace(/^-|-$/g,'').slice(0,90)||'item';
 const token=()=>{let a=new Uint8Array(32);crypto.getRandomValues(a);return [...a].map(x=>x.toString(16).padStart(2,'0')).join('')};
 async function sha(s){let b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
-async function hp(p,s=token()){let k=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveBits']);let b=await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(s),iterations:120000,hash:'SHA-256'},k,256);return s+':'+[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+async function hp(p,s=token()){let k=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveBits']);let b=await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(s),iterations:100000,hash:'SHA-256'},k,256);return s+':'+[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
 async function okpass(p,h){let s=h.split(':')[0];return h===await hp(p,s)}
 function ck(req){return (req.headers.get('Cookie')||'').split(';').map(x=>x.trim()).find(x=>x.startsWith(COOKIE+'='))?.split('=')[1]}
 async function me(req,e){let t=ck(req);if(!t)return null;return await e.DB.prepare('SELECT u.id,u.username,u.role,u.disabled FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?').bind(await sha(t),Date.now()).first()}
