@@ -1,4 +1,4 @@
-# Вознесение Wiki — Cloudflare Workers + D1
+ро о# Вознесение Wiki — Cloudflare Workers + D1
 
 Эта версия специально исправляет ошибку `Asset too large`: Worker не использует `[assets]` и не загружает `node_modules`. HTML/CSS/JS встроены в Worker.
 
