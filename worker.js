@@ -26,6 +26,45 @@ async function tagsPage(){let v=$('#view');v.innerHTML='<div class="head"><div><
 async function listing(title,url){let d=await api(url),v=$('#view');v.innerHTML='<div class="head"><div><div class="meta">ВОЗНЕСЕНИЕ WIKI</div><h2>'+title+'</h2></div>'+(S.user?.role==='admin'?'<button class="accent" onclick="edit()">+ Статья</button>':'')+'</div>'+(d.articles.length?'<div class="grid">'+d.articles.map(cards).join('')+'</div>':'<div class="empty card"><b>Ничего не найдено</b>Попробуйте другой запрос или создайте статью.</div>')}
 async function article(id){let d=await api('/api/article/'+id),a=d.article,v=$('#view');v.innerHTML='<article class="article-page card"><div class="meta">'+esc(a.category_name||'Статья')+' · '+esc(a.author||'')+'</div><div class="article-top"><div><h1>'+esc(a.title)+'</h1>'+((a.images||[]).map(im=>'<img class="article-image" src="/api/image/'+im.id+'" alt="'+esc(im.filename||a.title)+'">').join(''))+'<div class="article-body">'+esc(a.content)+'</div></div></div><div class="relations"><h3>Связи</h3><div class="rel-grid">'+((a.relations||[]).map(r=>'<a class="rel" href="#/article/'+r.id+'"><small>'+esc(r.label||'Связано с')+'</small><b>'+esc(r.title)+'</b></a>').join('')||'<span class="muted">Связанных статей пока нет.</span>')+'</div></div><div class="related"><h3>Читайте также</h3><div class="rel-grid">'+((a.related||[]).map(r=>'<a class="rel" href="#/article/'+r.id+'"><b>'+esc(r.title)+'</b></a>').join('')||'<span class="muted">Пока нет рекомендаций.</span>')+'</div></div>'+(S.user?.role==='admin'?'<div class="actions"><button onclick="edit('+a.id+')">Редактировать</button><button onclick="manageImages('+a.id+')">Фотографии</button></div>':'')+'</article>'}
 async function timeline(){let d=await api('/api/timeline'),v=$('#view');v.innerHTML='<div class="head"><div><div class="meta">ИСТОРИЯ МИРА</div><h2>📜 Хронология</h2></div></div><div class="timeline">'+(d.years.map(y=>'<div class="year">'+esc(y.year)+'</div>'+y.items.map(x=>'<div class="event"><a href="#/article/'+x.id+'"><b>'+esc(x.title)+'</b></a><div class="muted">'+esc(x.excerpt||'')+'</div></div>').join('')).join('')||'<div class="empty card">Пока нет событий.</div>')+'</div>'}
+async function edit(id){
+  if(S.user?.role!=='admin'){toast('Требуются права администратора.');return}
+  let a=null;
+  if(id){a=(await api('/api/article/'+id)).article}
+  if(!S.articles.length){try{S.articles=(await api('/api/articles?limit=200')).articles}catch{S.articles=[]}}
+  const cats=S.cats.filter(c=>!c.parent_id||c.parent_id);
+  const opts=S.cats.map(c=>'<option value="'+c.id+'" '+((a?.category_id==c.id)?'selected':'')+'>'+((c.parent_id?'↳ ':'')+esc(c.name))+'</option>').join('');
+  const selected=(a?.tags||[]).map(t=>t.name).join(', ');
+  const rels=(a?.relations||[]).map(r=>({id:r.id,label:r.label}));
+  const relRows=rels.map(r=>'<div class="relation-row"><select name="rid"><option value="'+r.id+'" selected>'+esc((S.articles.find(x=>x.id==r.id)||{}).title||r.title||('Статья #'+r.id))+'</option></select><input name="rl" value="'+esc(r.label||'Связано с')+'"><button type="button" onclick="this.parentElement.remove()">×</button></div>').join('');
+  modal('<button id="x">×</button><h2>'+(id?'Редактировать статью':'Новая статья')+'</h2><form id="articleForm" class="form">'+
+    '<div class="field"><label>Название</label><input name="title" required maxlength="180" value="'+esc(a?.title||'')+'"></div>'+ 
+    '<div class="row"><div class="field"><label>Категория</label><select name="category_id"><option value="">Без категории</option>'+opts+'</select></div><div class="field"><label>Год / дата для хронологии</label><input name="year" value="'+esc(a?.year||'')+'" placeholder="Например: 2025"></div></div>'+ 
+    '<div class="field"><label>Краткое описание</label><textarea name="excerpt" style="min-height:90px">'+esc(a?.excerpt||'')+'</textarea></div>'+ 
+    '<div class="field"><label>Текст статьи</label><textarea name="content" required>'+esc(a?.content||'')+'</textarea></div>'+ 
+    '<div class="field"><label>Теги</label><input name="tags" value="'+esc(selected)+'" placeholder="персонаж, Вознесение, фракция"></div>'+ 
+    '<div class="field"><label>Связи</label><div id="rel-editor">'+relRows+'</div><button type="button" onclick="addRel()">+ Добавить связь</button></div>'+ 
+    '<div class="field"><label>Фотография</label><input name="cover" type="file" accept="image/jpeg,image/png,image/webp"><small class="muted">Можно добавить фото сразу после сохранения. До 1,9 МБ.</small></div>'+ 
+    '<div class="actions"><button type="button" id="cancelEdit">Отмена</button><button class="accent">'+(id?'Сохранить изменения':'Создать статью')+'</button></div></form>');
+  // Populate relation selectors with all articles after the initial selected rows.
+  const form=$('#articleForm');
+  if(S.articles.length){form.querySelectorAll('select[name="rid"]').forEach(sel=>{const current=sel.value;sel.innerHTML='<option value="">Выберите статью</option>'+S.articles.filter(x=>x.id!=id).map(x=>'<option value="'+x.id+'" '+(x.id==current?'selected':'')+'>'+esc(x.title)+'</option>').join('')})}
+  $('#cancelEdit').onclick=close;
+  form.onsubmit=async e=>{
+    e.preventDefault();
+    const fd=new FormData(form), rel=[];
+    form.querySelectorAll('.relation-row').forEach(row=>{const rid=row.querySelector('[name="rid"]')?.value;if(rid)rel.push({id:+rid,label:row.querySelector('[name="rl"]')?.value||'Связано с'})});
+    const payload={title:fd.get('title'),excerpt:fd.get('excerpt'),content:fd.get('content'),category_id:fd.get('category_id')?+fd.get('category_id'):null,year:fd.get('year')||'',kind:'article',tags:String(fd.get('tags')||'').split(',').map(x=>x.trim()).filter(Boolean),relations:rel,info:{}};
+    try{
+      const r=id?await api('/api/articles/'+id,{method:'PUT',body:JSON.stringify(payload)}):await api('/api/articles',{method:'POST',body:JSON.stringify(payload)});
+      const newId=id||r.article.id;
+      const file=fd.get('cover');
+      if(file&&file.size){await uploadImage(newId,file)}
+      close();
+      toast(id?'Статья обновлена':'Статья создана');
+      if(location.hash==='#/admin')alist();else location.hash='#/article/'+newId;
+    }catch(x){toast(x.message)}
+  };
+}
 function addRel(){let d=document.createElement('div');d.className='relation-row';d.innerHTML='<select name="rid">'+S.articles.map(a=>'<option value="'+a.id+'">'+esc(a.title)+'</option>').join('')+'</select><input name="rl" value="Связано с"><button type="button" onclick="this.parentElement.remove()">×</button>';$('#rel-editor').appendChild(d)}
 async function uploadImage(id,file){if(!file.type.startsWith('image/'))return;if(file.size>1900000)throw Error('Фото слишком большое. Выбери изображение до 1,8 МБ.');let fd=new FormData();fd.append('file',file,file.name);await api('/api/articles/'+id+'/images',{method:'POST',body:fd})}async function manageImages(id){let a=(await api('/api/article/'+id)).article;modal('<button id="x">×</button><h2>Фотографии: '+esc(a.title)+'</h2><div class="upload-preview">'+(a.images||[]).map(im=>'<div><img src="/api/image/'+im.id+'"><button class="danger" onclick="delImage('+im.id+','+id+')">Удалить</button></div>').join('')+'</div><form id="uf" class="form"><input name="file" type="file" accept="image/jpeg,image/png,image/webp" required><button class="accent">Добавить фото</button></form>');$('#uf').onsubmit=async e=>{e.preventDefault();try{await uploadImage(id,e.target.file.files[0]);close();toast('Фото добавлено');render()}catch(x){toast(x.message)}}}async function delImage(i,id){if(confirm('Удалить фото?')){await api('/api/images/'+i,{method:'DELETE'});manageImages(id)}}
 async function admin(){if(S.user?.role!=='admin'){location.hash='#/';return}$('#view').innerHTML='<div class="head"><div><div class="meta">УПРАВЛЕНИЕ WIKI</div><h2>Админ-панель</h2></div><button class="accent" onclick="edit()">+ Статья</button></div><div class="card panel"><div class="actions" style="justify-content:flex-start"><button onclick="alist()">Статьи</button><button onclick="clist()">Категории</button><button onclick="ulist()">Пользователи</button></div><div id="panel"></div></div>';alist()}
